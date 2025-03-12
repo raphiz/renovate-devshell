@@ -47,7 +47,7 @@ if [ $ret -ne 0 ]; then
   exit $ret
 fi
 
-echo "$validationOutput" | grep -q '^INFO: Validating' || {
+echo "$validationOutput" | grep -q '^ INFO: Validating' || {
   echo "ERROR: No valid renovate config file found. Create one or run the renovate-preview with --no-validate" >&2
   echo "See https://docs.renovatebot.com/getting-started/installing-onboarding/#configuration-location"  >&2
   exit 1
