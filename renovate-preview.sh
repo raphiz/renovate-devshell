@@ -34,15 +34,34 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Validate the config first
+# make sure, there is a local `renovate.json`
 set +e
-OUTPUT=$(
+output=$(renovate-config-validator)
+ret=$?
+set -e
+
+if [ $ret -ne 0 ]; then
+  echo -e "$output"
+  echo "ERROR: Validation failed" >&2
+  exit $ret
+fi
+
+echo "$output" | grep -q '^INFO: Validating' || {
+  echo "ERROR: No valid renovate config file found. Create one or run the renovate-preview with --no-validate" >&2
+  echo "See https://docs.renovatebot.com/getting-started/installing-onboarding/#configuration-location"  >&2
+  exit 1
+}
+
+set +e
+renovateOutput=$(
   LOG_LEVEL=DEBUG renovate --onboarding=false --platform=local "${POSITIONAL_ARGS[@]}"
 )
 ret=$?
 set -e
 
 if [ $showDebugOutput == true ] || [ $ret -ne 0 ]; then
-  echo -e "$OUTPUT"
+  echo -e "$renovateOutput"
 fi
 
 if [ $ret -ne 0 ]; then
@@ -54,7 +73,7 @@ fi
 # the second sed fixes the JSON by replacing "config: {" with "{",
 # and jq then formats and sorts the output.
 # The resulting JSON is saved for summary generation (and maybe further analysis).
-echo "$OUTPUT" |
+echo "$renovateOutput" |
   sed -n '/DEBUG: packageFiles with updates (repository=local)/,/DEBUG: detectSemanticCommits() (repository=local)/{//!p;}' |
   sed '1s/.*/{/' |
   jq --sort-keys >"$packageFilesJSON"
