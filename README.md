@@ -64,10 +64,6 @@ For more details, run `renovate-preview --help`.
 
 ## FAQ
 
-### I receive an error like `Cannot read properties of undefined (reading '')`
-
-Make sure your project is onboarded (it must include a [renovate.json](https://docs.renovatebot.com/getting-started/installing-onboarding/#configuration-location) file).
-
 ## Contributing
 
 Contributions are welcome! Feel free to open an issue or PR.

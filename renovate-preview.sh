@@ -36,7 +36,7 @@ done
 
 set +e
 OUTPUT=$(
-	LOG_LEVEL=DEBUG renovate --platform=local "${POSITIONAL_ARGS[@]}"
+	LOG_LEVEL=DEBUG renovate --onboarding=false --platform=local "${POSITIONAL_ARGS[@]}"
 )
 ret=$?
 set -e
