@@ -37,17 +37,17 @@ done
 # Validate the config first
 # make sure, there is a local `renovate.json`
 set +e
-output=$(renovate-config-validator)
+validationOutput=$(renovate-config-validator)
 ret=$?
 set -e
 
 if [ $ret -ne 0 ]; then
-  echo -e "$output"
+  echo -e "$validationOutput"
   echo "ERROR: Validation failed" >&2
   exit $ret
 fi
 
-echo "$output" | grep -q '^INFO: Validating' || {
+echo "$validationOutput" | grep -q '^INFO: Validating' || {
   echo "ERROR: No valid renovate config file found. Create one or run the renovate-preview with --no-validate" >&2
   echo "See https://docs.renovatebot.com/getting-started/installing-onboarding/#configuration-location"  >&2
   exit 1
