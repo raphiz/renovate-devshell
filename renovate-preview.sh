@@ -52,6 +52,10 @@ if [ $validate == true ]; then
     exit $ret
   fi
 
+  if [ $showDebugOutput == true ] || [ $ret -ne 0 ]; then
+    echo -e "$validationOutput"
+  fi
+
   echo "$validationOutput" | grep -q '^ INFO: Validating' || {
     echo "ERROR: No valid renovate config file found. Create one or run the renovate-preview with --no-validate" >&2
     echo "See https://docs.renovatebot.com/getting-started/installing-onboarding/#configuration-location" >&2
