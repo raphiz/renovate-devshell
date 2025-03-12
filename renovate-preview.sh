@@ -5,48 +5,48 @@ set -euo pipefail
 showDebugOutput=false
 packageFilesJSON="$(mktemp)"
 while [[ $# -gt 0 ]]; do
-	case "$1" in
-	--help)
-		renovate --help
-		echo ""
-		echo "Preview Options:"
-		echo "  --debug                                      Prints the renovate debug log to stdout"
-		echo "  --package-files <file>                       Stores the captured packageFiles JSON file to <file> for further analysis"
-		exit 0
-		;;
-	--package-files)
-		packageFilesJSON=$2
-		shift 2
-		;;
-	--debug)
-		showDebugOutput=true
-		shift
-		;;
-	--)
-		shift
-		POSITIONAL_ARGS+=("$@")
-		break
-		;;
-	*)
-		POSITIONAL_ARGS+=("$1")
-		shift
-		;;
-	esac
+  case "$1" in
+  --help)
+    renovate --help
+    echo ""
+    echo "Preview Options:"
+    echo "  --debug                                      Prints the renovate debug log to stdout"
+    echo "  --package-files <file>                       Stores the captured packageFiles JSON file to <file> for further analysis"
+    exit 0
+    ;;
+  --package-files)
+    packageFilesJSON=$2
+    shift 2
+    ;;
+  --debug)
+    showDebugOutput=true
+    shift
+    ;;
+  --)
+    shift
+    POSITIONAL_ARGS+=("$@")
+    break
+    ;;
+  *)
+    POSITIONAL_ARGS+=("$1")
+    shift
+    ;;
+  esac
 done
 
 set +e
 OUTPUT=$(
-	LOG_LEVEL=DEBUG renovate --onboarding=false --platform=local "${POSITIONAL_ARGS[@]}"
+  LOG_LEVEL=DEBUG renovate --onboarding=false --platform=local "${POSITIONAL_ARGS[@]}"
 )
 ret=$?
 set -e
 
 if [ $showDebugOutput == true ] || [ $ret -ne 0 ]; then
-	echo -e "$OUTPUT"
+  echo -e "$OUTPUT"
 fi
 
 if [ $ret -ne 0 ]; then
-	exit $ret
+  exit $ret
 fi
 
 # Renovate outputs extensive debug information, including package files with version and update details.
@@ -55,9 +55,9 @@ fi
 # and jq then formats and sorts the output.
 # The resulting JSON is saved for summary generation (and maybe further analysis).
 echo "$OUTPUT" |
-	sed -n '/DEBUG: packageFiles with updates (repository=local)/,/DEBUG: detectSemanticCommits() (repository=local)/{//!p;}' |
-	sed '1s/.*/{/' |
-	jq --sort-keys >"$packageFilesJSON"
+  sed -n '/DEBUG: packageFiles with updates (repository=local)/,/DEBUG: detectSemanticCommits() (repository=local)/{//!p;}' |
+  sed '1s/.*/{/' |
+  jq --sort-keys >"$packageFilesJSON"
 
 # Print a summary of available updates, grouped by manager and update type (e.g., major, minor)
 jq -r '
