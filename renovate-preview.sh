@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+validate=true
 showDebugOutput=false
 packageFilesJSON="$(mktemp)"
 while [[ $# -gt 0 ]]; do
@@ -12,6 +13,7 @@ while [[ $# -gt 0 ]]; do
     echo "Preview Options:"
     echo "  --debug                                      Prints the renovate debug log to stdout"
     echo "  --package-files <file>                       Stores the captured packageFiles JSON file to <file> for further analysis"
+    echo "  --no-validate                                Do neither validate the configuration files nor check if such files exist before running renovate"
     exit 0
     ;;
   --package-files)
@@ -20,6 +22,10 @@ while [[ $# -gt 0 ]]; do
     ;;
   --debug)
     showDebugOutput=true
+    shift
+    ;;
+  --no-validate)
+    validate=false
     shift
     ;;
   --)
@@ -34,24 +40,24 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Validate the config first
-# make sure, there is a local `renovate.json`
-set +e
-validationOutput=$(renovate-config-validator)
-ret=$?
-set -e
+if [ $validate == true ]; then
+  set +e
+  validationOutput=$(renovate-config-validator)
+  ret=$?
+  set -e
 
-if [ $ret -ne 0 ]; then
-  echo -e "$validationOutput"
-  echo "ERROR: Validation failed" >&2
-  exit $ret
+  if [ $ret -ne 0 ]; then
+    echo -e "$validationOutput"
+    echo "ERROR: Validation failed" >&2
+    exit $ret
+  fi
+
+  echo "$validationOutput" | grep -q '^ INFO: Validating' || {
+    echo "ERROR: No valid renovate config file found. Create one or run the renovate-preview with --no-validate" >&2
+    echo "See https://docs.renovatebot.com/getting-started/installing-onboarding/#configuration-location" >&2
+    exit 1
+  }
 fi
-
-echo "$validationOutput" | grep -q '^ INFO: Validating' || {
-  echo "ERROR: No valid renovate config file found. Create one or run the renovate-preview with --no-validate" >&2
-  echo "See https://docs.renovatebot.com/getting-started/installing-onboarding/#configuration-location"  >&2
-  exit 1
-}
 
 set +e
 renovateOutput=$(
