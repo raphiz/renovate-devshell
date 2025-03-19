@@ -64,10 +64,8 @@ in {
   };
 
   config = let
-    renovatePreview = pkgs.writeShellApplication {
-      name = "renovate-preview";
-      runtimeInputs = [pkgs.jq pkgs.gnused pkgs.coreutils cfg.package];
-      text = builtins.readFile ./renovate-preview.sh;
+    renovatePreview = pkgs.callPackage ./renovate-preview.nix {
+      renovate = cfg.package;
     };
     configFile = generateConfig "renovate-config.json" cfg.settings;
   in
