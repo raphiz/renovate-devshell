@@ -4,6 +4,7 @@ set -euo pipefail
 
 validate=true
 showDebugOutput=false
+listFiles=false
 packageFilesJSON="$(mktemp)"
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -13,12 +14,17 @@ while [[ $# -gt 0 ]]; do
     echo "Preview Options:"
     echo "  --debug                                      Prints the renovate debug log to stdout"
     echo "  --package-files <file>                       Stores the captured packageFiles JSON file to <file> for further analysis"
+    echo "  --list-files                                 Include the files in which the version will be modified in the report"
     echo "  --no-validate                                Do neither validate the configuration files nor check if such files exist before running renovate"
     exit 0
     ;;
   --package-files)
     packageFilesJSON=$2
     shift 2
+    ;;
+  --list-files)
+    listFiles=true
+    shift
     ;;
   --debug)
     showDebugOutput=true
@@ -94,86 +100,3 @@ if [[ $(<"$packageFilesJSON") == "{" ]]; then
 fi
 
 jq --sort-keys '.' "${packageFilesJSON}" >"${packageFilesJSON}.sorted" && mv "${packageFilesJSON}.sorted" "$packageFilesJSON"
-
-# Print a summary of available updates, grouped by manager and update type (e.g., major, minor)
-jq -r '
-  def escape: "\u001b";
-  def reset: "[0m";
-  def colors:
-    {
-      "cyan": "[1;36m",
-      "magenta": "[1;35m",
-      "yellow": "[1;33m",
-      "green": "[1;32m",
-      "red": "[1;31m",
-    };
-
-  def colored_text(text; color):
-    escape + colors[color] + text + escape + reset;
-
-  to_entries
-  | map({
-      manager: .key,
-      updates: (
-        .value
-        | map(.deps[]?
-            | select(.updates and (.updates | length > 0))
-            | . as $dep
-            | $dep.updates[]
-            | { packageName: $dep.packageName,
-                currentVersion: $dep.currentVersion,
-                newVersion: .newVersion,
-                newVersionAgeInDays: .newVersionAgeInDays,
-                updateType: .updateType,
-                homepage: $dep.homepage }
-          )
-      ),
-      warnings: (
-        .value
-        | map(.deps[]?
-            | select(.warnings and (.warnings | length > 0))
-            | { packageName: .packageName,
-                currentValue: .currentValue,
-                warnings: .warnings }
-          )
-      )
-    })
-  | map(select((.updates | length > 0) or (.warnings | length > 0)))
-  | map(
-      colored_text("Manager: "; "cyan") + (.manager | ascii_upcase) + "\n"
-      + (
-        (if (.updates | length > 0) then
-          "Updates:\n"
-          + ((.updates | sort_by(.updateType) | group_by(.updateType))
-            | map(
-              colored_text(.[0].updateType + ":"; "magenta") + "\n"
-              + (map(
-                  " - " + .packageName
-                  + " [" + colored_text(.currentVersion; "yellow")
-                  + " -> " + colored_text(.newVersion; "green") + "]"
-                  + (if (.newVersionAgeInDays != null or ((.homepage // "") | length) > 0) then
-                      " ("
-                      + (if .newVersionAgeInDays != null then "age: " + (.newVersionAgeInDays | tostring) + "d" else "" end)
-                      + (if ((.homepage // "") | length) > 0 then (if .newVersionAgeInDays != null then " - " else "" end) + .homepage else "" end)
-                      + ")"
-                    else "" end)
-                ) | join("\n"))
-              )
-              | join("\n\n"))
-          else "" end)
-        +
-        (if (.warnings | length > 0) then
-          (if (.updates | length > 0) then "\n\n" else "" end)
-          + colored_text("Warnings:"; "red") + "\n"
-          + ((.warnings)
-            | map(
-              " - " + .packageName
-              + " [" + colored_text(.currentValue; "yellow") + "]"
-              + " - " + (.warnings | map(.message) | join(" | "))
-            )
-            | join("\n"))
-        else "" end)
-      )
-    )
-  | join("\n\n")
-' "$packageFilesJSON"
