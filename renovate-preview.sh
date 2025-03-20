@@ -97,68 +97,83 @@ jq --sort-keys '.' "${packageFilesJSON}" >"${packageFilesJSON}.sorted" && mv "${
 
 # Print a summary of available updates, grouped by manager and update type (e.g., major, minor)
 jq -r '
+  def escape: "\u001b";
+  def reset: "[0m";
+  def colors:
+    {
+      "cyan": "[1;36m",
+      "magenta": "[1;35m",
+      "yellow": "[1;33m",
+      "green": "[1;32m",
+      "red": "[1;31m",
+    };
+
+  def colored_text(text; color):
+    escape + colors[color] + text + escape + reset;
+
   to_entries
   | map({
       manager: .key,
       updates: (
         .value
-         | map(.deps[]?
-             | select(.updates and (.updates | length > 0))
-             | . as $dep
-             | $dep.updates[]
-               | { packageName: $dep.packageName,
-                   currentVersion: $dep.currentVersion,
-                   newVersion: .newVersion,
-                   newVersionAgeInDays: .newVersionAgeInDays,
-                   updateType: .updateType,
-                   homepage: $dep.homepage }
-           )
+        | map(.deps[]?
+            | select(.updates and (.updates | length > 0))
+            | . as $dep
+            | $dep.updates[]
+            | { packageName: $dep.packageName,
+                currentVersion: $dep.currentVersion,
+                newVersion: .newVersion,
+                newVersionAgeInDays: .newVersionAgeInDays,
+                updateType: .updateType,
+                homepage: $dep.homepage }
+          )
       ),
       warnings: (
         .value
-         | map(.deps[]?
-             | select(.warnings and (.warnings | length > 0))
-             | { packageName: .packageName,
-                 currentValue: .currentValue,
-                 warnings: .warnings }
-           )
+        | map(.deps[]?
+            | select(.warnings and (.warnings | length > 0))
+            | { packageName: .packageName,
+                currentValue: .currentValue,
+                warnings: .warnings }
+          )
       )
     })
   | map(select((.updates | length > 0) or (.warnings | length > 0)))
   | map(
-      "\u001b[1;36mManager:\u001b[0m " + (.manager | ascii_upcase) + "\n" +
-      (
-         (if (.updates | length > 0) then
-            "Updates:\n" +
-            ((.updates | sort_by(.updateType) | group_by(.updateType))
-             | map(
-                 "\u001b[1;35m" + (.[0].updateType) + ":\u001b[0m\n" +
-                 (map(
-                    " - " + .packageName
-                    + " [\u001b[1;33m" + .currentVersion + "\u001b[0m -> \u001b[1;32m" + .newVersion + "\u001b[0m]"
-                    + (if (.newVersionAgeInDays != null or ((.homepage // "") | length) > 0) then
-                        " (" +
-                           (if .newVersionAgeInDays != null then "age: " + (.newVersionAgeInDays | tostring) + "d" else "" end)
-                           + (if ((.homepage // "") | length) > 0 then (if .newVersionAgeInDays != null then " - " else "" end) + .homepage else "" end)
-                        + ")"
-                      else "" end)
-                 ) | join("\n"))
-             )
-             | join("\n\n"))
-         else "" end)
-         +
-         (if (.warnings | length > 0) then
-            (if (.updates | length > 0) then "\n\n" else "" end)
-            + "\u001b[1;31mWarnings:\u001b[0m\n" +
-            ((.warnings)
-             | map(
-                " - " + .packageName
-                + " [\u001b[1;33m" + .currentValue + "\u001b[0m]"
-                + " - " + (.warnings | map(.message) | join(" | "))
-             )
-             | join("\n"))
-         else "" end)
+      colored_text("Manager: "; "cyan") + (.manager | ascii_upcase) + "\n"
+      + (
+        (if (.updates | length > 0) then
+          "Updates:\n"
+          + ((.updates | sort_by(.updateType) | group_by(.updateType))
+            | map(
+              colored_text(.[0].updateType + ":"; "magenta") + "\n"
+              + (map(
+                  " - " + .packageName
+                  + " [" + colored_text(.currentVersion; "yellow")
+                  + " -> " + colored_text(.newVersion; "green") + "]"
+                  + (if (.newVersionAgeInDays != null or ((.homepage // "") | length) > 0) then
+                      " ("
+                      + (if .newVersionAgeInDays != null then "age: " + (.newVersionAgeInDays | tostring) + "d" else "" end)
+                      + (if ((.homepage // "") | length) > 0 then (if .newVersionAgeInDays != null then " - " else "" end) + .homepage else "" end)
+                      + ")"
+                    else "" end)
+                ) | join("\n"))
+              )
+              | join("\n\n"))
+          else "" end)
+        +
+        (if (.warnings | length > 0) then
+          (if (.updates | length > 0) then "\n\n" else "" end)
+          + colored_text("Warnings:"; "red") + "\n"
+          + ((.warnings)
+            | map(
+              " - " + .packageName
+              + " [" + colored_text(.currentValue; "yellow") + "]"
+              + " - " + (.warnings | map(.message) | join(" | "))
+            )
+            | join("\n"))
+        else "" end)
       )
-  )
+    )
   | join("\n\n")
 ' "$packageFilesJSON"
