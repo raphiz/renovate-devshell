@@ -43,7 +43,8 @@ Before you get started, make sure your project is onboarded (it must include a [
 
 You can get a preview of pending updates with the `renovate-preview` command (see below).
 
-To run this as part of your CI job, [configure the settings](https://docs.renovatebot.com/examples/self-hosting/) according to your needs (at least the [platform](https://docs.renovatebot.com/modules/platform/) related properties). For secrets (such as `RENOVATE_GITHUB_COM_TOKEN`, `RENOVATE_PASSWORD`, `RENOVATE_TOKEN`, etc.), use environment variables and the secrets mechanism of your CI platform.
+To run this as part of your CI job, [configure the settings](https://docs.renovatebot.com/examples/self-hosting/) according to your needs (at least the [platform](https://docs.renovatebot.com/modules/platform/) related properties).
+For secrets (such as `RENOVATE_GITHUB_COM_TOKEN`, `RENOVATE_PASSWORD`, `RENOVATE_TOKEN`, etc.), use environment variables and the secrets mechanism of your CI platform.
 
 ### Running just the preview script
 
@@ -59,7 +60,8 @@ This setup works with various CI systems, including GitHub Actions, GitLab CI/CD
 
 ## `renovate-preview`
 
-The `renovate-preview` CLI is a wrapper around Renovate. For basic usage, call it without any additional parameters, and you will receive output as follows:
+The `renovate-preview` CLI is a wrapper around Renovate.
+For basic usage, call it without any additional parameters, and you will receive output as follows:
 
 ![Example output of renovate-preview showing updates grouped by manager and kind (major, minor, etc.)](renovate-preview.png)
 
@@ -75,4 +77,5 @@ For more details, run `renovate-preview --help`.
 
 ## Contributing
 
-Contributions are welcome! Feel free to open an issue or PR.
+Contributions are welcome!
+Feel free to open an issue or PR.
