@@ -44,6 +44,14 @@ You can get a preview of pending updates with the `renovate-preview` command (se
 
 To run this as part of your CI job, [configure the settings](https://docs.renovatebot.com/examples/self-hosting/) to your needs (at least the [platform](https://docs.renovatebot.com/modules/platform/) related properties). For secrets (such as `RENOVATE_GITHUB_COM_TOKEN`, `RENOVATE_PASSWORD`, `RENOVATE_TOKEN`, etc.), use environment variables and the secrets mechanism of your CI platform.
 
+### Running just the preview script
+
+If you just want to see use the preview script, use the following command:
+
+```nix
+nix run github:raphiz/renovate-devshell#renovate-preview -- --no-validate
+```
+
 ### Supported CI Systems
 
 This setup works with various CI systems, including GitHub Actions, GitLab CI/CD, and Jenkins.
