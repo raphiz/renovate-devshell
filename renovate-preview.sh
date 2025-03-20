@@ -87,14 +87,13 @@ echo "$renovateOutput" |
   sed -n '/DEBUG: packageFiles with updates (repository=local)/,/DEBUG: detectSemanticCommits() (repository=local)/{//!p;}' |
   sed '1s/.*/{/' >"$packageFilesJSON"
 
-if [[ $(< "$packageFilesJSON") == "{" ]]; then
+if [[ $(<"$packageFilesJSON") == "{" ]]; then
   echo "No packageFiles found"
   rm "$packageFilesJSON"
   exit 0
 fi
 
-jq --sort-keys '.' "${packageFilesJSON}" > "${packageFilesJSON}.sorted" && mv "${packageFilesJSON}.sorted" "$packageFilesJSON"
-
+jq --sort-keys '.' "${packageFilesJSON}" >"${packageFilesJSON}.sorted" && mv "${packageFilesJSON}.sorted" "$packageFilesJSON"
 
 # Print a summary of available updates, grouped by manager and update type (e.g., major, minor)
 jq -r '
