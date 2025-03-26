@@ -100,3 +100,4 @@ if [[ $(<"$packageFilesJSON") == "{" ]]; then
 fi
 
 jq --sort-keys '.' "${packageFilesJSON}" >"${packageFilesJSON}.sorted" && mv "${packageFilesJSON}.sorted" "$packageFilesJSON"
+jq --argjson showFiles $listFiles -r -f "$RENOVATE_PREVIEW_JQ" "$packageFilesJSON"
